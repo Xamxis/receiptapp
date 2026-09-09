@@ -38,7 +38,7 @@ fun HealthDashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
         Text("Gesundheits-Score diese Woche", style = MaterialTheme.typography.headlineSmall)
 
         Card(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-            Column(modifier = Modifier.padding(16.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+            Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("${score.score}", style = MaterialTheme.typography.displayLarge)
                 Text("von 100")
             }

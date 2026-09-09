@@ -1,6 +1,7 @@
 package com.example.receiptapp.data.settings
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -17,7 +18,7 @@ private val Context.dataStore by preferencesDataStore(name = "user_goals")
 /** Persistiert Ernährungs-/Budgetziele via DataStore (kein Room nötig – Singleton-Objekt). */
 @Singleton
 class UserGoalsRepository @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     private object Keys {
         val WEEKLY_SNACK_BUDGET = doublePreferencesKey("weekly_snack_budget")

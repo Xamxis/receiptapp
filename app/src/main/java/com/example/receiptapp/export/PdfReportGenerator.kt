@@ -1,6 +1,7 @@
 package com.example.receiptapp.export
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.example.receiptapp.data.model.ReceiptWithItems
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
@@ -16,7 +17,7 @@ import javax.inject.Inject
  * mit mehreren Seiten / Diagrammen als Bitmap-Export erweitern.
  */
 class PdfReportGenerator @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     fun generateMonthlyReport(receipts: List<ReceiptWithItems>, monthLabel: String): File {
         val document = PDDocument()

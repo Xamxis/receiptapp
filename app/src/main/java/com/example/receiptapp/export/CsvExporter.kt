@@ -1,6 +1,7 @@
 package com.example.receiptapp.export
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.example.receiptapp.data.model.ReceiptWithItems
 import java.io.File
 import java.io.FileWriter
@@ -8,7 +9,7 @@ import javax.inject.Inject
 
 /** Exportiert Belege als CSV (Beleg-Ebene + Posten-Ebene, flach). */
 class CsvExporter @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     fun export(receipts: List<ReceiptWithItems>, fileName: String = "receiptapp_export.csv"): File {
         val file = File(context.getExternalFilesDir(null), fileName)

@@ -9,7 +9,7 @@ import androidx.camera.core.ImageProxy
  * Wandelt ein CameraX ImageProxy (JPEG) in ein korrekt rotiertes Bitmap um,
  * damit ML Kit den Beleg unabhängig von der Gerätehaltung sauber liest.
  */
-fun ImageProxy.toBitmap(): Bitmap {
+fun ImageProxy.toRotatedBitmap(): Bitmap {
     val buffer = planes[0].buffer
     val bytes = ByteArray(buffer.remaining())
     buffer.get(bytes)

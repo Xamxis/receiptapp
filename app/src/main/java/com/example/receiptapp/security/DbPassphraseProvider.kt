@@ -1,6 +1,7 @@
 package com.example.receiptapp.security
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import androidx.security.crypto.EncryptedSharedPreferences
@@ -20,7 +21,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class DbPassphraseProvider @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)

@@ -12,7 +12,7 @@ import net.sqlcipher.database.SupportFactory
 @Database(
     entities = [Receipt::class, ReceiptItem::class],
     version = 1,
-    exportSchema = true
+    exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -30,7 +30,7 @@ abstract class AppDatabase : RoomDatabase() {
             val factory = SupportFactory(passphrase)
             return Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
                 .openHelperFactory(factory)
-                .fallbackToDestructiveMigration(dropAllTables = false) // MVP: Migrationen später ausbauen
+                .fallbackToDestructiveMigration()
                 .build()
         }
     }
