@@ -1,5 +1,6 @@
 package com.example.receiptapp.data.model
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Relation
@@ -20,7 +21,7 @@ data class Receipt(
 
 /** Aggregat für UI: Beleg inkl. seiner Posten (Room @Relation) */
 data class ReceiptWithItems(
-    val receipt: Receipt,
+    @Embedded val receipt: Receipt,
     @Relation(parentColumn = "id", entityColumn = "receiptId")
     val items: List<ReceiptItem>
 )
