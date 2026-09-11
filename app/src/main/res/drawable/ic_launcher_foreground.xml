@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bonsai-Icon: ein Beleg, aus dem ein Blatt wächst -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Beleg-Korpus mit gezacktem unteren Rand -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,30 L70,30 L70,74 L66,70 L62,74 L58,70 L54,74 L50,70 L46,74 L42,70 L38,74 Z" />
+
+    <!-- Belegzeilen -->
+    <path
+        android:fillColor="#8CBFA3"
+        android:pathData="M44,40 L64,40 L64,43 L44,43 Z" />
+    <path
+        android:fillColor="#8CBFA3"
+        android:pathData="M44,48 L60,48 L60,51 L44,51 Z" />
+    <path
+        android:fillColor="#8CBFA3"
+        android:pathData="M44,56 L56,56 L56,59 L44,59 Z" />
+
+    <!-- Blatt, das oben herauswächst -->
+    <path
+        android:fillColor="#7BC47F"
+        android:pathData="M54,30 C54,30 52,16 62,10 C72,4 78,8 78,8 C78,8 76,22 68,27 C61,31 54,30 54,30 Z" />
+    <!-- Blattstiel -->
+    <path
+        android:fillColor="#5A9E62"
+        android:pathData="M53,31 C53,31 57,24 64,19 L65,21 C58,26 55,32 55,32 Z" />
+</vector>
