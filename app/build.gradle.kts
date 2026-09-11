@@ -22,10 +22,34 @@ android {
         buildConfigField("String", "AI_PROXY_BASE_URL", "\"$proxyUrl\"")
     }
 
+    // Release-Signing über Umgebungsvariablen (CI) oder gradle.properties (lokal),
+    // damit KEIN Passwort/Keystore jemals im Git-Repo landet. Ist keine dieser
+    // Variablen gesetzt, bleibt der Release-Build unsigniert (nur zum Testen mit
+    // "gradle assembleRelease" lokal geeignet, NICHT für den Play-Store-Upload).
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("KEYSTORE_PATH")
+                ?: project.findProperty("BONSAI_KEYSTORE_PATH") as String?
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                    ?: project.findProperty("BONSAI_KEYSTORE_PASSWORD") as String?
+                keyAlias = System.getenv("KEY_ALIAS")
+                    ?: project.findProperty("BONSAI_KEY_ALIAS") as String?
+                keyPassword = System.getenv("KEY_PASSWORD")
+                    ?: project.findProperty("BONSAI_KEY_PASSWORD") as String?
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            val releaseSigning = signingConfigs.getByName("release")
+            if (releaseSigning.storeFile != null) {
+                signingConfig = releaseSigning
+            }
         }
     }
 

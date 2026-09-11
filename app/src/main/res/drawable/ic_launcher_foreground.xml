@@ -1,33 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Bonsai-Icon: ein Beleg, aus dem ein Blatt wächst -->
+<!--
+  Bonsai-Icon: ein Beleg/Topf, aus dem ein kleiner Baum wächst.
+  Bewusst komplett innerhalb der "sicheren Zone" (zentrale 66dp von 108dp,
+  also x/y 21-87), damit nichts von runden/eckigen Launcher-Masken
+  abgeschnitten wird. Kräftige Farben mit hohem Kontrast zum hellen
+  Hintergrund, damit das Icon auch klein (z. B. 48dp) klar erkennbar bleibt.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Beleg-Korpus mit gezacktem unteren Rand -->
+    <!-- Topf/Beleg-Schale mit angedeutetem gezacktem Belegrand -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M38,30 L70,30 L70,74 L66,70 L62,74 L58,70 L54,74 L50,70 L46,74 L42,70 L38,74 Z" />
+        android:pathData="M38,66 L70,66 L70,80 L67,77 L64,80 L61,77 L58,80 L55,77 L52,80 L49,77 L46,80 L43,77 L40,80 L38,80 Z" />
+    <!-- Andeutung von Druckzeilen auf dem Beleg -->
+    <path android:fillColor="#2E6B4F" android:pathData="M43,70 L65,70 L65,72.5 L43,72.5 Z" />
+    <path android:fillColor="#2E6B4F" android:pathData="M43,74.5 L58,74.5 L58,77 L43,77 Z" />
 
-    <!-- Belegzeilen -->
+    <!-- Stamm -->
     <path
-        android:fillColor="#8CBFA3"
-        android:pathData="M44,40 L64,40 L64,43 L44,43 Z" />
-    <path
-        android:fillColor="#8CBFA3"
-        android:pathData="M44,48 L60,48 L60,51 L44,51 Z" />
-    <path
-        android:fillColor="#8CBFA3"
-        android:pathData="M44,56 L56,56 L56,59 L44,59 Z" />
+        android:fillColor="#6B4226"
+        android:pathData="M51,53 L57,53 L58,66 L50,66 Z" />
 
-    <!-- Blatt, das oben herauswächst -->
+    <!-- Baumkrone: drei überlappende Rundungen für Tiefe/Volumen -->
+    <path
+        android:fillColor="#2E6B4F"
+        android:pathData="
+            M27,45
+            m-13,0
+            a13,13 0 1,0 26,0
+            a13,13 0 1,0 -26,0
+            Z" />
+    <path
+        android:fillColor="#2E6B4F"
+        android:pathData="
+            M81,45
+            m-13,0
+            a13,13 0 1,0 26,0
+            a13,13 0 1,0 -26,0
+            Z" />
     <path
         android:fillColor="#7BC47F"
-        android:pathData="M54,30 C54,30 52,16 62,10 C72,4 78,8 78,8 C78,8 76,22 68,27 C61,31 54,30 54,30 Z" />
-    <!-- Blattstiel -->
-    <path
-        android:fillColor="#5A9E62"
-        android:pathData="M53,31 C53,31 57,24 64,19 L65,21 C58,26 55,32 55,32 Z" />
+        android:pathData="
+            M54,34
+            m-16,0
+            a16,16 0 1,0 32,0
+            a16,16 0 1,0 -32,0
+            Z" />
 </vector>

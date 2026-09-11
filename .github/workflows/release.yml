@@ -1,0 +1,47 @@
+name: Release AAB
+
+# Nur manuell auslösbar (Actions-Tab -> "Release AAB" -> "Run workflow"),
+# damit nicht bei jedem Push versehentlich ein Release-Bundle gebaut wird.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Android SDK einrichten
+        uses: android-actions/setup-android@v3
+
+      - name: Gradle einrichten
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Keystore aus Secret wiederherstellen
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "${{ runner.temp }}/release.jks"
+
+      - name: Signiertes Release-Bundle bauen
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: gradle bundleRelease --stacktrace
+
+      - name: AAB als Artifact hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: bonsai-release-aab
+          path: app/build/outputs/bundle/release/*.aab
+
+      - name: Keystore-Datei wieder entfernen
+        if: always()
+        run: rm -f "${{ runner.temp }}/release.jks"

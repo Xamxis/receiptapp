@@ -101,7 +101,7 @@ fun ProPaywallSheet(
 
             Spacer(Modifier.height(20.dp))
             Text(
-                "Einmalig ${state.priceText ?: "2,99 €"} – kein Abo, keine Folgekosten.",
+                "${state.priceText ?: "2,99 €"} ${state.billingPeriodText ?: "pro Monat"} – jederzeit kündbar.",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -129,7 +129,7 @@ fun ProPaywallSheet(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Pro freischalten – ${state.priceText ?: "2,99 €"}")
+                    Text("Pro abonnieren – ${state.priceText ?: "2,99 €"} ${state.billingPeriodText ?: "pro Monat"}")
                 }
             }
 

@@ -197,9 +197,10 @@ app/src/main/java/com/example/receiptapp/
 
 ---
 
-## 10. Pro-Version (einmalig 2,99 €)
+## 10. Pro-Version (Abo, 2,99 €/Monat)
 
-Umgesetzt als **einmaliger In-App-Kauf** (kein Abo) über Google Play Billing 7.
+Umgesetzt als **monatliches Abonnement** über Google Play Billing 7 (automatische
+Verlängerung, jederzeit über Google Play kündbar).
 
 ### Was ist gratis, was ist Pro
 
@@ -220,13 +221,19 @@ und lässt sich dort mit einer Zahl ändern.
 ### Einrichtung in der Google Play Console
 
 1. App anlegen und mindestens in einen **internen Test-Track** hochladen (signiertes Release-AAB).
-2. Unter *Monetarisierung → In-App-Produkte* ein Produkt anlegen:
-   - **Produkt-ID:** `bonsai_pro_lifetime` (muss exakt so heißen, siehe `BillingRepository.PRO_PRODUCT_ID`)
-   - **Typ:** Einmaliger Kauf
+2. Unter *Monetarisierung → Abos* ein neues Abo anlegen:
+   - **Produkt-ID:** `bonsai_pro_monthly` (muss exakt so heißen, siehe `BillingRepository.PRO_PRODUCT_ID`)
+   - Name/Beschreibung eintragen (z. B. "Bonsai Pro")
+3. Im Abo einen **Basisplan** anlegen (z. B. ID `monthly-autorenew`):
+   - **Abrechnungszeitraum:** 1 Monat
    - **Preis:** 2,99 € für Deutschland/Österreich, andere Länder nach Wunsch
-   - Status auf **aktiv** setzen
-3. Unter *Einrichtung → Lizenztests* deine Test-Konten eintragen – die können dann ohne echte Abbuchung kaufen.
-4. Die App **über Google Play installieren** (interner Test-Link), nicht per ADB.
+   - **Erneuerungstyp:** automatisch verlängernd
+   - Basisplan **aktivieren**
+4. Unter *Einrichtung → Lizenztests* deine Test-Konten eintragen – die können dann
+   abonnieren, ohne dass echt abgebucht wird (Test-Abos verlängern sich in
+   stark verkürzten Zyklen, z. B. alle paar Minuten, praktisch zum Testen der
+   Verlängerungs-/Kündigungslogik).
+5. Die App **über Google Play installieren** (interner Test-Link), nicht per ADB.
 
 ### Warum Billing beim lokalen Testen nicht funktioniert
 
@@ -239,14 +246,73 @@ Damit die Pro-Funktionen trotzdem testbar sind, gibt es in **Debug-Builds** unte
 *Einstellungen → Nur für Entwicklung* einen Schalter, der Pro lokal freischaltet.
 Im Release-Build ist dieser Bereich nicht vorhanden (`BuildConfig.DEBUG`-Abfrage).
 
+### Was bei einem Abo zusätzlich zu beachten ist (gegenüber einem Einmalkauf)
+
+- **Kündigungen/Ablauf erkennen:** `restorePurchases()` fragt bei jedem App-Start den
+  aktuellen Abo-Status ab und setzt den Pro-Status entsprechend zurück, falls das Abo
+  gekündigt oder abgelaufen ist. Für eine noch zeitnahere Erkennung (z. B. direkt beim
+  Ablauf, nicht erst beim nächsten App-Start) könnte man zusätzlich Google Play
+  **Realtime Developer Notifications** (RTDN) über ein eigenes Backend anbinden –
+  für den Start reicht der Check beim App-Start.
+- **Preisänderungen/Steuern:** Google zeigt automatisch den lokalisierten, inkl.
+  Steuer berechneten Preis an (`priceText` im Code) – hier muss nichts manuell
+  gepflegt werden.
+- **Kündigung durch den Nutzer:** läuft komplett über die Google-Play-eigene
+  Abo-Verwaltung (Play Store → Abos), nicht über die App selbst – das ist von
+  Google so vorgeschrieben und muss nicht zusätzlich gebaut werden.
+
 ### Wirtschaftlicher Hinweis
 
-Jeder Scan und jede Chat-Nachricht kostet dich API-Gebühren beim KI-Anbieter. Bei einem
-einmaligen Preis von 2,99 € und unbegrenzter Pro-Nutzung zahlst du bei Vielnutzern
-langfristig drauf. Drei Möglichkeiten, das abzufangen:
+Ein Abo deckt laufende KI-Kosten pro Nutzer deutlich verlässlicher ab als ein Einmalkauf,
+da die Einnahmen wiederkehrend sind. Bei 2,99 €/Monat bist du bei den meisten
+Nutzungsintensitäten auf der sicheren Seite; bei sehr intensiver Chat-Nutzung lohnt es
+sich trotzdem, die tatsächlichen API-Kosten pro aktivem Pro-Nutzer im Auge zu behalten.
 
-- **Fair-Use-Grenze für Pro** einziehen (z. B. 300 Scans/Monat) – ehrlich kommuniziert
-- **Abo statt Einmalkauf** (z. B. 1,49 €/Monat) – deckt laufende Kosten sauber ab
-- **Nutzer bringt eigenen API-Key mit** – dann trägst du keine Kosten
+---
 
-Aktuell ist Variante "einmalig, unbegrenzt" umgesetzt, wie gewünscht.
+## 11. Play-Store-Reife
+
+### Signierter Release-Build
+
+Der GitHub-Actions-Workflow baut bisher nur eine **Debug-APK** zum Testen. Für den
+Play Store brauchst du ein **signiertes Release-AAB (Android App Bundle)**:
+
+1. **Upload-Keystore lokal erzeugen** (einmalig, NICHT ins Git-Repo committen):
+   ```
+   keytool -genkeypair -v -keystore bonsai-upload-key.jks -alias bonsai -keyalg RSA -keysize 2048 -validity 10000
+   ```
+   Passwort und Datei sicher aufbewahren (Passwort-Manager) – ohne sie kannst du
+   die App später nicht mehr aktualisieren.
+
+2. **Als GitHub-Secrets hinterlegen** (Repo → Settings → Secrets and variables → Actions):
+   - `KEYSTORE_BASE64` – Ausgabe von `base64 -w0 bonsai-upload-key.jks`
+   - `KEYSTORE_PASSWORD`
+   - `KEY_ALIAS` (hier: `bonsai`)
+   - `KEY_PASSWORD`
+
+3. Der mitgelieferte Workflow `.github/workflows/release.yml` nutzt diese Secrets,
+   baut `gradle bundleRelease` und lädt das fertige `.aab` als Artifact hoch.
+   Manuell auslösen: Actions-Tab → "Release AAB" → "Run workflow".
+
+4. Das heruntergeladene `.aab` in der Play Console unter *Produktion* (oder erst
+   *Interner Test*) hochladen.
+
+### Weitere Play-Store-Voraussetzungen (unabhängig vom Code)
+
+- **Datenschutzerklärung**: Pflicht, sobald die App Daten verarbeitet (hier: KI-Analyse,
+  Zahlungsdaten über Google Play). Muss unter einer echten, erreichbaren URL gehostet sein
+  und im Play-Console-Formular *App-Content → Datenschutzerklärung* verlinkt werden.
+- **Datensicherheit-Formular** (*App-Content → Datensicherheit*): welche Daten die App
+  sammelt (hier u. a.: Belegtexte an den KI-Anbieter, keine Standortdaten, Zahlungsdaten
+  laufen komplett über Google Play).
+- **Store-Eintrag**: App-Symbol (1024×1024 px, ohne Transparenz – aus dem Icon in
+  `res/drawable/ic_launcher_foreground.xml` ableitbar, z. B. via Android Studios
+  "Image Asset"-Assistent), Screenshots (mind. 2, empfohlen 4–8), Kurz- und
+  Vollbeschreibung.
+- **Ziel-API-Level**: Google verlangt ein aktuelles `targetSdk` (aktuell 35 gesetzt) –
+  vor dem Upload kurz prüfen, ob Play zum Zeitpunkt deines Uploads ein neueres Minimum
+  verlangt.
+- **Zugriffsrechte-Erklärung**: Die App fragt nur Kamera- und Internet-Berechtigung an –
+  dafür ist normalerweise keine gesonderte Begründung im Play-Console-Formular nötig,
+  bei Kamera kann Google trotzdem kurz nachfragen, wofür sie gebraucht wird
+  (Antwort: Belege fotografieren für die Texterkennung).

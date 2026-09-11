@@ -107,7 +107,7 @@ fun SettingsScreen(
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Pro freischalten – einmalig 2,99 €")
+                        Text("Pro abonnieren – 2,99 € / Monat")
                     }
                     TextButton(
                         onClick = proViewModel::restore,

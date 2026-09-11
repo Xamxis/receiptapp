@@ -27,24 +27,25 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Zustand der Play-Verbindung und des Kaufs. */
+/** Zustand der Play-Verbindung und des Abos. */
 data class BillingState(
     val isPro: Boolean = false,
     val priceText: String? = null,
+    val billingPeriodText: String? = null,
     val isConnected: Boolean = false,
     val isPurchasing: Boolean = false,
     val error: String? = null
 )
 
 /**
- * Kapselt Google Play Billing für die einmalige Pro-Freischaltung.
+ * Kapselt Google Play Billing für das monatliche Bonsai-Pro-Abo.
  *
  * WICHTIG für den Test: Billing funktioniert nur, wenn die App über Google Play
- * installiert wurde (mindestens interner Test-Track) und das Produkt in der Play
- * Console angelegt ist. In Emulatoren, Browser-Testdiensten oder per ADB
- * installierten Debug-Builds meldet Play "Produkt nicht gefunden" – das ist
- * erwartetes Verhalten. Zum Testen gibt es in Debug-Builds einen Schalter
- * in den Einstellungen.
+ * installiert wurde (mindestens interner Test-Track) und das Abo in der Play
+ * Console angelegt UND aktiviert ist (inkl. Basisplan mit Preis). In Emulatoren,
+ * Browser-Testdiensten oder per ADB installierten Debug-Builds meldet Play
+ * "Produkt nicht gefunden" – das ist erwartetes Verhalten. Zum Testen gibt es
+ * in Debug-Builds einen Schalter in den Einstellungen.
  */
 @Singleton
 class BillingRepository @Inject constructor(
@@ -53,8 +54,13 @@ class BillingRepository @Inject constructor(
 ) : PurchasesUpdatedListener {
 
     companion object {
-        /** Produkt-ID, die exakt so in der Google Play Console angelegt werden muss. */
-        const val PRO_PRODUCT_ID = "bonsai_pro_lifetime"
+        /**
+         * Abo-ID, die exakt so in der Google Play Console angelegt werden muss
+         * (Monetarisierung -> Abos -> Abo erstellen). Zusätzlich braucht das Abo
+         * dort einen aktiven Basisplan (z. B. ID "monthly-autorenew") mit dem
+         * Preis 2,99 € und automatischer Verlängerung.
+         */
+        const val PRO_PRODUCT_ID = "bonsai_pro_monthly"
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -63,9 +69,12 @@ class BillingRepository @Inject constructor(
     val state: StateFlow<BillingState> = _state.asStateFlow()
 
     private var productDetails: ProductDetails? = null
+    private var offerToken: String? = null
 
     private val billingClient: BillingClient = BillingClient.newBuilder(context)
         .setListener(this)
+        // .enableOneTimeProducts() ist laut Play-Dokumentation IMMER Pflicht,
+        // auch wenn die App ausschließlich Abos verkauft.
         .enablePendingPurchases(
             PendingPurchasesParams.newBuilder().enableOneTimeProducts().build()
         )
@@ -111,7 +120,7 @@ class BillingRepository @Inject constructor(
                 listOf(
                     QueryProductDetailsParams.Product.newBuilder()
                         .setProductId(PRO_PRODUCT_ID)
-                        .setProductType(BillingClient.ProductType.INAPP)
+                        .setProductType(BillingClient.ProductType.SUBS)
                         .build()
                 )
             )
@@ -119,26 +128,40 @@ class BillingRepository @Inject constructor(
 
         val result = billingClient.queryProductDetails(params)
         val details = result.productDetailsList?.firstOrNull()
+        // Ein Abo kann mehrere Angebote haben (z. B. Einführungspreis + regulärer
+        // Basisplan). Für ein einfaches Ein-Preis-Abo nehmen wir das erste Angebot.
+        val offer = details?.subscriptionOfferDetails?.firstOrNull()
+        val pricingPhase = offer?.pricingPhases?.pricingPhaseList?.firstOrNull()
 
-        if (details != null) {
+        if (details != null && offer != null) {
             productDetails = details
+            offerToken = offer.offerToken
             _state.value = _state.value.copy(
-                // Play liefert den lokalisierten Preis inkl. Währung des Nutzers
-                priceText = details.oneTimePurchaseOfferDetails?.formattedPrice,
+                priceText = pricingPhase?.formattedPrice,
+                billingPeriodText = describeBillingPeriod(pricingPhase?.billingPeriod),
                 error = null
             )
         } else {
             _state.value = _state.value.copy(
-                error = "Produkt konnte nicht geladen werden. " +
-                    "Das ist normal, solange die App nicht über Google Play installiert ist."
+                error = "Abo konnte nicht geladen werden. Das ist normal, solange die App " +
+                    "nicht über Google Play installiert ist oder das Abo in der Play Console " +
+                    "noch nicht aktiv ist."
             )
         }
+    }
+
+    private fun describeBillingPeriod(isoPeriod: String?): String = when (isoPeriod) {
+        "P1M" -> "pro Monat"
+        "P1Y" -> "pro Jahr"
+        "P1W" -> "pro Woche"
+        else -> ""
     }
 
     /** Startet den Kauf-Dialog. Muss aus einer Activity heraus aufgerufen werden. */
     fun launchPurchase(activity: Activity) {
         val details = productDetails
-        if (details == null) {
+        val token = offerToken
+        if (details == null || token == null) {
             _state.value = _state.value.copy(
                 error = "Der Kauf ist gerade nicht möglich. Prüfe deine Verbindung zu Google Play."
             )
@@ -150,6 +173,7 @@ class BillingRepository @Inject constructor(
                 listOf(
                     BillingFlowParams.ProductDetailsParams.newBuilder()
                         .setProductDetails(details)
+                        .setOfferToken(token)
                         .build()
                 )
             )
@@ -159,23 +183,26 @@ class BillingRepository @Inject constructor(
         billingClient.launchBillingFlow(activity, flowParams)
     }
 
-    /** Holt bereits getätigte Käufe – z. B. nach Neuinstallation oder Gerätewechsel. */
+    /**
+     * Holt den aktuellen Abo-Status von Google Play – z. B. nach Neuinstallation,
+     * Gerätewechsel oder um eine Kündigung/Ablauf des Abos zu erkennen.
+     */
     suspend fun restorePurchases() {
         val params = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.INAPP)
+            .setProductType(BillingClient.ProductType.SUBS)
             .build()
 
         val result = billingClient.queryPurchasesAsync(params)
-        val active = result.purchasesList.any { purchase ->
+        val hasActiveSub = result.purchasesList.any { purchase ->
             purchase.products.contains(PRO_PRODUCT_ID) &&
                 purchase.purchaseState == Purchase.PurchaseState.PURCHASED
         }
 
         result.purchasesList.forEach { handlePurchase(it) }
 
-        if (active) {
-            proStatusStore.setPro(true)
-        }
+        // Play liefert abgelaufene/gekündigte Abos hier nicht mehr als PURCHASED,
+        // daher können wir den lokalen Status direkt auf das Abfrageergebnis setzen.
+        proStatusStore.setPro(hasActiveSub)
         _state.value = _state.value.copy(isPurchasing = false)
     }
 
@@ -206,7 +233,8 @@ class BillingRepository @Inject constructor(
         if (!purchase.products.contains(PRO_PRODUCT_ID)) return
         if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return
 
-        // Nicht bestätigte Käufe werden von Google nach 3 Tagen automatisch erstattet.
+        // Nicht bestätigte Käufe/Abo-Starts werden von Google nach 3 Tagen
+        // automatisch storniert.
         if (!purchase.isAcknowledged) {
             val params = AcknowledgePurchaseParams.newBuilder()
                 .setPurchaseToken(purchase.purchaseToken)
