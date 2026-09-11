@@ -1,4 +1,4 @@
-# ReceiptApp – KI-gestützter Beleg-Scanner mit Finanz- & Gesundheitsanalyse
+# Bonsai – Beleg-Scanner mit Ausgaben- und Ernährungsberater
 
 Technisches Konzept, Architektur und lauffähiges Startprojekt (Android, Kotlin, Jetpack Compose).
 
@@ -193,3 +193,60 @@ app/src/main/java/com/example/receiptapp/
 - Retry/Backoff + Rate-Limiting am Proxy
 - On-Device-Fallback-Parser (Regex-Heuristik) falls kein Netz verfügbar
 - WorkManager für „Beleg im Hintergrund nachparsen", falls KI-Call beim Scannen fehlschlägt
+
+
+---
+
+## 10. Pro-Version (einmalig 2,99 €)
+
+Umgesetzt als **einmaliger In-App-Kauf** (kein Abo) über Google Play Billing 7.
+
+### Was ist gratis, was ist Pro
+
+| Funktion | Gratis | Pro |
+|---|---|---|
+| Belege scannen | 15 pro Monat | unbegrenzt |
+| Übersicht, Score, Berater-Tipps | ✓ | ✓ |
+| Beleg-Liste, Sortieren, Gruppieren | ✓ | ✓ |
+| Zeiträume Woche/Monat | ✓ | ✓ |
+| Zeiträume 3 Monate / gesamt | – | ✓ |
+| Produktübersicht (was wie oft gekauft) | – | ✓ |
+| Berater-Chat (KI) | – | ✓ |
+| CSV- und PDF-Export | – | ✓ |
+
+Das Scan-Limit steht in `billing/ProStatusStore.kt` als `FreeTier.MONTHLY_SCAN_LIMIT`
+und lässt sich dort mit einer Zahl ändern.
+
+### Einrichtung in der Google Play Console
+
+1. App anlegen und mindestens in einen **internen Test-Track** hochladen (signiertes Release-AAB).
+2. Unter *Monetarisierung → In-App-Produkte* ein Produkt anlegen:
+   - **Produkt-ID:** `bonsai_pro_lifetime` (muss exakt so heißen, siehe `BillingRepository.PRO_PRODUCT_ID`)
+   - **Typ:** Einmaliger Kauf
+   - **Preis:** 2,99 € für Deutschland/Österreich, andere Länder nach Wunsch
+   - Status auf **aktiv** setzen
+3. Unter *Einrichtung → Lizenztests* deine Test-Konten eintragen – die können dann ohne echte Abbuchung kaufen.
+4. Die App **über Google Play installieren** (interner Test-Link), nicht per ADB.
+
+### Warum Billing beim lokalen Testen nicht funktioniert
+
+Play Billing verlangt, dass die App über Google Play installiert wurde und die Signatur
+zum Play-Console-Eintrag passt. In Emulatoren, Browser-Testdiensten (Appetize) oder bei
+per ADB installierten Debug-Builds meldet Play "Produkt nicht gefunden". Das ist erwartet
+und kein Fehler im Code.
+
+Damit die Pro-Funktionen trotzdem testbar sind, gibt es in **Debug-Builds** unter
+*Einstellungen → Nur für Entwicklung* einen Schalter, der Pro lokal freischaltet.
+Im Release-Build ist dieser Bereich nicht vorhanden (`BuildConfig.DEBUG`-Abfrage).
+
+### Wirtschaftlicher Hinweis
+
+Jeder Scan und jede Chat-Nachricht kostet dich API-Gebühren beim KI-Anbieter. Bei einem
+einmaligen Preis von 2,99 € und unbegrenzter Pro-Nutzung zahlst du bei Vielnutzern
+langfristig drauf. Drei Möglichkeiten, das abzufangen:
+
+- **Fair-Use-Grenze für Pro** einziehen (z. B. 300 Scans/Monat) – ehrlich kommuniziert
+- **Abo statt Einmalkauf** (z. B. 1,49 €/Monat) – deckt laufende Kosten sauber ab
+- **Nutzer bringt eigenen API-Key mit** – dann trägst du keine Kosten
+
+Aktuell ist Variante "einmalig, unbegrenzt" umgesetzt, wie gewünscht.

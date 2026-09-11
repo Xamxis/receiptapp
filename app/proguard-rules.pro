@@ -6,7 +6,7 @@
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.AnnotationsKt
 -keepclassmembers class kotlinx.serialization.json.** { *** Companion; }
--keepclasseswithmembers class com.example.receiptapp.data.remote.** { *; }
+-keepclasseswithmembers class com.bonsai.app.data.remote.** { *; }
 
 # SQLCipher
 -keep class net.sqlcipher.** { *; }

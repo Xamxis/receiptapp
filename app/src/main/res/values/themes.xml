@@ -1,3 +1,7 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.ReceiptApp" parent="android:Theme.Material.Light.NoActionBar" />
+<resources>
+    <!-- Splash-/Start-Theme; das eigentliche UI-Theme kommt aus Compose (BonsaiTheme). -->
+    <style name="Theme.Bonsai" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
 </resources>
